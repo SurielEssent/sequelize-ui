@@ -148,6 +148,51 @@ type AssociationTypeArgs = {
   sourceModel: Model
   association: ModelAssociation
 }
+
+// Helper to determine if the foreign key for an association is required
+function isForeignKeyRequired(
+  sourceModel: Model,
+  targetModel: Model,
+  association: Association,
+): boolean {
+  // Determine FK name based on association type
+  let fkName: string
+  let modelWithFk: Model
+
+  switch (association.type.type) {
+    case AssociationTypeType.BelongsTo: {
+      // FK is on source model, named after target
+      fkName = association.foreignKey || `${singular(camelCase(modelName(targetModel)))}Id`
+      modelWithFk = sourceModel
+      break
+    }
+    case AssociationTypeType.HasMany:
+    case AssociationTypeType.HasOne: {
+      // FK is on target model, named after source
+      fkName =
+        association.foreignKey ||
+        `${singular(camelCase(associationName({ association, targetModel: sourceModel })))}Id`
+      modelWithFk = targetModel
+      break
+    }
+    case AssociationTypeType.ManyToMany: {
+      // For ManyToMany, the FK is in the junction table
+      // By default, junction table FKs are typically nullable
+      // We return false since Sequelize allows clearing ManyToMany associations with null
+      return false
+    }
+  }
+
+  // Find the FK field and check if it's required
+  const fkField = modelWithFk.fields.find(
+    (field) => camelCase(field.name) === fkName || field.name === fkName,
+  )
+
+  // If FK field exists, return its required status
+  // If FK field doesn't exist (will be auto-created by Sequelize), default to not required (nullable)
+  return fkField?.required ?? false
+}
+
 function associationType({
   sourceModel,
   association: { model: targetModel, association },
@@ -158,12 +203,20 @@ function associationType({
   const singularMethodPostfix = singular(pascalCase(name))
   const pluralMethodPostfix = plural(pascalCase(name))
   const targetPks = targetModel.fields.filter((f) => f.primaryKey)
-  const targetPkType =
+
+  // Check if the foreign key is required (non-nullable)
+  const fkRequired = isForeignKeyRequired(sourceModel, targetModel, association)
+
+  // Build the PK type, adding | null if FK is not required (nullable)
+  const basePkType =
     targetPks.length > 1
       ? 'never'
       : targetPks.length === 1
         ? dataTypeToTypeScript(targetPks[0].type)
         : dataTypeToTypeScript(integerDataType())
+
+  // Add | null to allow clearing associations when FK is nullable
+  const targetPkType = fkRequired ? basePkType : `${basePkType} | null`
 
   switch (association.type.type) {
     case AssociationTypeType.BelongsTo: {
