@@ -48,27 +48,51 @@ function FieldFieldset({ field, errors, onChange, onDelete }: FieldFieldsetProps
     field.type.type === DataTypeType.Enum ? field.type.values.join(', ') : undefined,
   )
 
+  // State for Array<Enum> values input
+  const [arrayEnumInputValue, setArrayEnumInputValue] = React.useState<string | undefined>(() =>
+    field.type.type === DataTypeType.Array && field.type.arrayType.type === DataTypeType.Enum
+      ? field.type.arrayType.values.join(', ')
+      : undefined,
+  )
+
   const handleChange = React.useCallback(
     (change: Partial<Field>): void => onChange(field.id, change),
     [field.id, onChange],
   )
 
+  // Helper function to parse enum values with Unicode support (accents, etc.)
+  const parseEnumValues = React.useCallback((input: string | undefined): string[] => {
+    return dedup(
+      input
+        // Normalize to composed form for consistency with accented characters
+        ?.normalize('NFC')
+        // Remove only control characters and problematic special chars, but keep Unicode letters/numbers
+        .replaceAll(/[\x00-\x1F\x7F"`\\]/g, '')
+        // split on , ; \n
+        .split(/[ ]*,[ ]*|[ ]*;[ ]*|[ ]*\n[ ]*/)
+        .map((v) => v.trim())
+        .filter((v) => !!v) || [],
+    )
+  }, [])
+
   const handleBlurEnumInput = React.useCallback(() => {
     if (field.type.type === DataTypeType.Enum) {
-      const values = dedup(
-        enumInputValue
-          // clear leading/tracing non-word characters and any non-(word|space|-|;|,)
-          ?.replaceAll(/^\W+|[^\w\n -,;]|\W+$/g, '')
-          // split on , ; \n
-          .split(/[ ]*,[ ]*|[ ]*;[ ]*|[ ]*\n[ ]*/)
-          .map((v) => v.trim())
-          .filter((v) => !!v) || [],
-      )
+      const values = parseEnumValues(enumInputValue)
 
       handleChange({ type: { ...field.type, values } })
       setEnumInputValue(values.join(', '))
     }
-  }, [field.type, enumInputValue, handleChange])
+  }, [field.type, enumInputValue, handleChange, parseEnumValues])
+
+  // Handler for Array<Enum> values input
+  const handleBlurArrayEnumInput = React.useCallback(() => {
+    if (field.type.type === DataTypeType.Array && field.type.arrayType.type === DataTypeType.Enum) {
+      const values = parseEnumValues(arrayEnumInputValue)
+
+      handleChange({ type: { ...field.type, arrayType: { ...field.type.arrayType, values } } })
+      setArrayEnumInputValue(values.join(', '))
+    }
+  }, [field.type, arrayEnumInputValue, handleChange, parseEnumValues])
 
   const handleChangeName = React.useCallback(
     (name?: string) => handleChange({ name: name || '' }),
@@ -191,9 +215,25 @@ function FieldFieldset({ field, errors, onChange, onDelete }: FieldFieldsetProps
   )
 
   const handleChangeArrayType = React.useCallback(
-    (type: DataTypeType) =>
-      field.type.type === DataTypeType.Array &&
-      handleChange({ type: { ...field.type, arrayType: dataTypeFromDataTypeType(type) } }),
+    (type: DataTypeType) => {
+      if (field.type.type !== DataTypeType.Array) return
+
+      let newArrayType = dataTypeFromDataTypeType(type)
+
+      // Preserve enum values when switching from Enum to Enum
+      if (
+        type === DataTypeType.Enum &&
+        field.type.arrayType.type === DataTypeType.Enum
+      ) {
+        newArrayType = { ...newArrayType, values: field.type.arrayType.values }
+        setArrayEnumInputValue(field.type.arrayType.values.join(', '))
+      } else if (type === DataTypeType.Enum) {
+        // Reset array enum input when switching to Enum from another type
+        setArrayEnumInputValue('')
+      }
+
+      handleChange({ type: { ...field.type, arrayType: newArrayType } })
+    },
     [field.type, handleChange],
   )
 
@@ -434,15 +474,27 @@ function FieldFieldset({ field, errors, onChange, onDelete }: FieldFieldsetProps
           />
         )}
         {field.type.type == DataTypeType.Array && (
-          <Select<DataTypeType>
-            id={`field-array-type-${field.id}`}
-            className={classnames(gridColumn('col-span-6'))}
-            label="Array type"
-            options={DataTypeType}
-            display={displayDataTypeType}
-            value={field.type.arrayType.type}
-            onChange={handleChangeArrayType}
-          />
+          <>
+            <Select<DataTypeType>
+              id={`field-array-type-${field.id}`}
+              className={classnames(gridColumn('col-span-6'))}
+              label="Array type"
+              options={DataTypeType}
+              display={displayDataTypeType}
+              value={field.type.arrayType.type}
+              onChange={handleChangeArrayType}
+            />
+            {field.type.arrayType.type === DataTypeType.Enum && (
+              <TextInput
+                id={`field-array-enum-values-${field.id}`}
+                label="Enum values"
+                className={classnames(gridColumn('col-span-12'))}
+                value={arrayEnumInputValue}
+                onChange={setArrayEnumInputValue}
+                onBlur={handleBlurArrayEnumInput}
+              />
+            )}
+          </>
         )}
       </div>
     </fieldset>
