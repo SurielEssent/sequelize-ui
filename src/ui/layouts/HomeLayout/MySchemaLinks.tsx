@@ -1,5 +1,9 @@
 import { Schema } from '@src/core/schema'
-import { PanelLink } from '@src/ui/components/form/PanelButton'
+import { downloadSchemaJson } from '@src/io/schemaDownload'
+import IconButton from '@src/ui/components/form/IconButton'
+import PanelButton, { PanelLink } from '@src/ui/components/form/PanelButton'
+import JsonIcon from '@src/ui/components/icons/Json'
+import { useAlert } from '@src/ui/lib/alert'
 import RouteLink from '@src/ui/routing/RouteLink'
 import { newSchemaRoute, schemaRoute } from '@src/ui/routing/routes'
 import {
@@ -17,10 +21,12 @@ import {
   minHeight,
   outlineStyle,
   overflow,
+  padding,
   position,
   textOverflow,
   toClassname,
   width,
+  zIndex,
 } from '@src/ui/styles/classnames'
 import { breakWords, flexCenter, panelAction, panelGrid } from '@src/ui/styles/utils'
 import { now, TimeGranularity, timeSince } from '@src/utils/dateTime'
@@ -31,9 +37,13 @@ import PlusCircleIcon from '../../components/icons/Plus'
 
 type MySchemaLinksProps = {
   schemas: Schema[]
+  onClickImport: () => void
 }
 
-export default function MySchemaLinks({ schemas }: MySchemaLinksProps): React.ReactElement {
+export default function MySchemaLinks({
+  schemas,
+  onClickImport,
+}: MySchemaLinksProps): React.ReactElement {
   return (
     <ul className={panelGrid}>
       <li>
@@ -45,6 +55,17 @@ export default function MySchemaLinks({ schemas }: MySchemaLinksProps): React.Re
           )}
           icon={PlusCircleIcon}
           iconProps={{ size: 6 }}
+        />
+      </li>
+      <li>
+        <PanelButton
+          label="Import schema JSON"
+          className={classnames(
+            backgroundColor('hover:bg-amber-50', toClassname('hover:dark:bg-amber-900')),
+          )}
+          icon={JsonIcon}
+          iconProps={{ size: 6 }}
+          onClick={onClickImport}
         />
       </li>
       {schemas
@@ -63,7 +84,20 @@ type MySchemaButtonProps = {
   schema: Schema
 }
 function MySchemaButton({ schema }: MySchemaButtonProps): React.ReactElement {
+  const { success, error } = useAlert()
   const modelCount = schema.models.length
+
+  const handleExportJson = (evt: React.MouseEvent) => {
+    evt.preventDefault()
+    evt.stopPropagation()
+    try {
+      downloadSchemaJson(schema)
+      success('Schema JSON download started.', { ttl: 4000 })
+    } catch (e) {
+      console.error(e)
+      error('Failed to export schema JSON.')
+    }
+  }
 
   return (
     <div
@@ -79,7 +113,14 @@ function MySchemaButton({ schema }: MySchemaButtonProps): React.ReactElement {
         backgroundColor('hover:bg-indigo-50', toClassname('hover:dark:bg-indigo-900')),
       )}
     >
-      <h3 className={classnames(breakWords)}>
+      <IconButton
+        className={classnames(position('absolute'), inset('top-1', 'right-1'), zIndex('z-10'))}
+        label="export schema as JSON"
+        icon={JsonIcon}
+        iconProps={{ size: 5 }}
+        onClick={handleExportJson}
+      />
+      <h3 className={classnames(breakWords, width('w-full'), padding('pr-8'))}>
         <RouteLink
           route={schemaRoute(schema.id)}
           prefetch={false}

@@ -61,6 +61,7 @@ type UseSchemaLayoutResult = {
   save: () => void
   cancel: () => void
   back: () => void
+  exportSchemaJson: () => void
 }
 export function useSchemaLayout({
   schema,
@@ -459,6 +460,30 @@ export function useSchemaLayout({
     onExit()
   }, [schema, state, onExit])
 
+  const exportSchemaJson = React.useCallback(() => {
+    const snapshot =
+      state.type === SchemaLayoutStateType.EDIT_SCHEMA
+        ? state.schema
+        : state.type === SchemaLayoutStateType.EDIT_MODEL
+          ? {
+              ...schema,
+              models: schema.models.map((m) => (m.id === state.model.id ? state.model : m)),
+            }
+          : state.type === SchemaLayoutStateType.VIEW_SCHEMA
+            ? state.schema
+            : schema
+
+    import('@src/io/schemaDownload')
+      .then(({ downloadSchemaJson }) => {
+        downloadSchemaJson(snapshot)
+        success('Schema JSON download started.', { ttl: 4000 })
+      })
+      .catch((e) => {
+        console.error(e)
+        error('Failed to export schema JSON.')
+      })
+  }, [state, schema, success, error])
+
   return {
     state,
     isEditing:
@@ -485,5 +510,6 @@ export function useSchemaLayout({
     save,
     cancel,
     back,
+    exportSchemaJson,
   }
 }

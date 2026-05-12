@@ -24,6 +24,7 @@ import Button from '../../components/form/Button'
 import IconButton from '../../components/form/IconButton'
 import CloseIcon from '../../components/icons/Close'
 import FloppyDiscIcon from '../../components/icons/FloppyDisc'
+import JsonIcon from '../../components/icons/Json'
 import PencilIcon from '../../components/icons/Pencil'
 import TrashIcon from '../../components/icons/Trash'
 import CodeViewerControls from './CodeViewerControls'
@@ -44,6 +45,7 @@ type SchemaLayoutControlsProps = {
   onCancel: () => void
   onSave: () => void
   onClose: () => void
+  onExportSchemaJson: () => void
 }
 
 export default function SchemaLayoutControls({
@@ -60,6 +62,7 @@ export default function SchemaLayoutControls({
   onCancel,
   onSave,
   onClose,
+  onExportSchemaJson,
 }: SchemaLayoutControlsProps): React.ReactElement | null {
   return (
     <SchemaLayoutControlsWrapper>
@@ -85,6 +88,7 @@ export default function SchemaLayoutControls({
           onCancel={onCancel}
           onSave={onSave}
           onClose={onClose}
+          onExportSchemaJson={onExportSchemaJson}
         />
       </div>
     </SchemaLayoutControlsWrapper>
@@ -104,6 +108,7 @@ type SchemaLayoutControlsActionsProps = {
   onCancel: () => void
   onSave: () => void
   onClose: () => void
+  onExportSchemaJson: () => void
 }
 
 function SchemaLayoutControlsActions({
@@ -117,6 +122,7 @@ function SchemaLayoutControlsActions({
   onCancel,
   onSave,
   onClose,
+  onExportSchemaJson,
 }: SchemaLayoutControlsActionsProps): React.ReactElement | null {
   if (state.type === SchemaLayoutStateType.CODE) {
     return (
@@ -127,6 +133,7 @@ function SchemaLayoutControlsActions({
         onClickEdit={onEdit}
         onClickClose={onClose}
         onChangeDbOptions={onChangeDbOptions}
+        onExportSchemaJson={onExportSchemaJson}
       />
     )
   }
@@ -157,6 +164,13 @@ function SchemaLayoutControlsActions({
           iconProps={{ size: 6 }}
           onClick={onEdit}
         />
+        <IconButton
+          className={classnames(iconButtonMargin, display('hidden', '2xs:inline-block'))}
+          label="export schema as JSON"
+          icon={JsonIcon}
+          iconProps={{ size: 6 }}
+          onClick={onExportSchemaJson}
+        />
         <ActionMenu
           className={classnames(iconButtonMargin, display('2xs:hidden', 'inline-block'))}
           items={[
@@ -171,6 +185,12 @@ function SchemaLayoutControlsActions({
               icon: PencilIcon,
               iconProps: { size: 5 },
               onClick: onEdit,
+            },
+            {
+              label: 'Export JSON',
+              icon: JsonIcon,
+              iconProps: { size: 5 },
+              onClick: onExportSchemaJson,
             },
             {
               label: 'Delete',
@@ -211,6 +231,13 @@ function SchemaLayoutControlsActions({
           iconProps={{ size: 6 }}
           onClick={onEdit}
         />
+        <IconButton
+          className={classnames(iconButtonMargin, display('hidden', '2xs:inline-block'))}
+          label="export schema as JSON"
+          icon={JsonIcon}
+          iconProps={{ size: 6 }}
+          onClick={onExportSchemaJson}
+        />
         <ActionMenu
           className={classnames(iconButtonMargin, display('2xs:hidden', 'inline-block'))}
           items={[
@@ -225,6 +252,12 @@ function SchemaLayoutControlsActions({
               icon: PencilIcon,
               iconProps: { size: 5 },
               onClick: onEdit,
+            },
+            {
+              label: 'Export JSON',
+              icon: JsonIcon,
+              iconProps: { size: 5 },
+              onClick: onExportSchemaJson,
             },
             {
               label: 'Delete',
@@ -256,6 +289,16 @@ function SchemaLayoutControlsActions({
         onClick={onCancel}
       >
         Cancel
+      </Button>
+
+      <Button
+        className={classnames(width('w-16', 'xs:w-20'), margin('2xs:ml-2'))}
+        icon={JsonIcon}
+        iconProps={{ size: 4 }}
+        size="text-xs"
+        onClick={onExportSchemaJson}
+      >
+        JSON
       </Button>
 
       {!meta?.isExample && (

@@ -1,4 +1,5 @@
 import schemaApi from '@src/api/schema'
+import { parseSchemaExport } from '@src/api/schema/schemaJson'
 import userPreferences from '@src/api/userPreferences'
 import { Schema } from '@src/core/schema'
 import IconButton from '@src/ui/components/form/IconButton'
@@ -8,7 +9,8 @@ import useAsync from '@src/ui/hooks/useAsync'
 import useIsOpen from '@src/ui/hooks/useIsOpen'
 import { useAlert } from '@src/ui/lib/alert'
 import RouteLink from '@src/ui/routing/RouteLink'
-import { newSchemaRoute } from '@src/ui/routing/routes'
+import { goTo } from '@src/ui/routing/navigation'
+import { newSchemaRoute, schemaRoute } from '@src/ui/routing/routes'
 import {
   backgroundColor,
   classnames,
@@ -33,6 +35,8 @@ const SchemaStorageInfo = dynamic(() => import('./SchemaStorageInfo'))
 
 const CLEAR_DATA_SUCCESS_COPY = 'All schemas deleted.'
 const CLEAR_DATA_ERROR_COPY = `Failed to delete schemas. Try clearing localStorage or site data through your browser's developer console.`
+const IMPORT_SCHEMA_ERROR_COPY =
+  'Could not import that file. Choose a JSON file exported from Sequelize UI (Code / JSON toolbar or home page export).'
 
 export default function MySchemas(): React.ReactElement {
   const { data: schemas, error, refetch } = useAsync({ getData: schemaApi.listSchemas })
@@ -40,6 +44,28 @@ export default function MySchemas(): React.ReactElement {
   const { isOpen: isInfoModalOpen, open: openInfoModal, close: closeInfoModal } = useIsOpen()
 
   const { success, error: logError } = useAlert()
+
+  const importInputRef = React.useRef<HTMLInputElement>(null)
+
+  const openImportPicker = () => importInputRef.current?.click()
+
+  const handleImportFile: React.ChangeEventHandler<HTMLInputElement> = async (evt) => {
+    const file = evt.target.files?.[0]
+    evt.target.value = ''
+    if (!file) return
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text) as unknown
+      const imported = parseSchemaExport(parsed)
+      const created = await schemaApi.createSchema(imported)
+      success(`Imported schema "${created.name}".`, { ttl: 6000 })
+      await refetch()
+      goTo(schemaRoute(created.id))
+    } catch (e) {
+      console.error(e)
+      logError(IMPORT_SCHEMA_ERROR_COPY, { ttl: 10000 })
+    }
+  }
 
   const handleClickClearData = async () => {
     await clear()
@@ -60,13 +86,27 @@ export default function MySchemas(): React.ReactElement {
 
   return (
     <>
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json,.json"
+        className={classnames(display('hidden'))}
+        aria-hidden
+        onChange={handleImportFile}
+      />
       <div
         className={classnames(minHeight('min-h-26', 'xs:min-h-20', 'md:min-h-10'), width('w-full'))}
       >
         {!schemas && error && <SchemasError onClickClearData={handleClickClearData} />}
-        {schemas && schemas.length === 0 && <ZeroState onClickOpenInfo={openInfoModal} />}
+        {schemas && schemas.length === 0 && (
+          <ZeroState onClickOpenInfo={openInfoModal} onClickImport={openImportPicker} />
+        )}
         {schemas && schemas.length > 0 && (
-          <SchemasState schemas={schemas} onClickInfo={openInfoModal} />
+          <SchemasState
+            schemas={schemas}
+            onClickInfo={openInfoModal}
+            onClickImport={openImportPicker}
+          />
         )}
       </div>
       <Modal
@@ -84,9 +124,9 @@ export default function MySchemas(): React.ReactElement {
   )
 }
 
-type ZeroStateProps = { onClickOpenInfo: () => void }
+type ZeroStateProps = { onClickOpenInfo: () => void; onClickImport: () => void }
 
-function ZeroState({ onClickOpenInfo }: ZeroStateProps): React.ReactElement {
+function ZeroState({ onClickOpenInfo, onClickImport }: ZeroStateProps): React.ReactElement {
   return (
     <>
       <div id={MY_SCHEMAS_ID} className={classnames(flexCenter)}>
@@ -107,8 +147,25 @@ function ZeroState({ onClickOpenInfo }: ZeroStateProps): React.ReactElement {
             )}
           >
             create a new schema
-          </RouteLink>{' '}
-          or select one of the example schemas{' '}
+          </RouteLink>
+          ,{' '}
+          <button
+            type="button"
+            onClick={onClickImport}
+            className={classnames(
+              inlineButton(),
+              margin('mx-1'),
+              backgroundColor(
+                'bg-indigo-100',
+                'hover:bg-indigo-200',
+                'dark:bg-indigo-700',
+                toClassname('dark:hover:bg-indigo-900'),
+              ),
+            )}
+          >
+            import a schema JSON file
+          </button>
+          , or select one of the example schemas{' '}
           <span className={classnames(display('inline-block'))}>
             below.
             <span className={classnames(verticalAlign('align-middle'))}>
@@ -127,9 +184,13 @@ function ZeroState({ onClickOpenInfo }: ZeroStateProps): React.ReactElement {
   )
 }
 
-type SchemasStateProps = { schemas: Schema[]; onClickInfo: () => void }
+type SchemasStateProps = { schemas: Schema[]; onClickInfo: () => void; onClickImport: () => void }
 
-function SchemasState({ schemas, onClickInfo }: SchemasStateProps): React.ReactElement {
+function SchemasState({
+  schemas,
+  onClickInfo,
+  onClickImport,
+}: SchemasStateProps): React.ReactElement {
   return (
     <>
       <div className={classnames(flexCenterVertical, margin('mb-4'))}>
@@ -143,7 +204,7 @@ function SchemasState({ schemas, onClickInfo }: SchemasStateProps): React.ReactE
         />
       </div>
       <div className={classnames(flexCenter)}>
-        <MySchemaLinks schemas={schemas} />
+        <MySchemaLinks schemas={schemas} onClickImport={onClickImport} />
       </div>
     </>
   )

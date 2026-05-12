@@ -27,6 +27,7 @@ import ArrowLeftIcon from '../../components/icons/ArrowLeft'
 import CloseIcon from '../../components/icons/Close'
 import CopyIcon from '../../components/icons/Copy'
 import FolderIcon from '../../components/icons/Folder'
+import JsonIcon from '../../components/icons/Json'
 import PencilIcon from '../../components/icons/Pencil'
 import SettingsIcon from '../../components/icons/Settings'
 
@@ -39,6 +40,7 @@ type CodeViewerControlsProps = {
   onClickEdit: () => void
   onClickClose: () => void
   onChangeDbOptions: (dbOptions: DbOptions) => void
+  onExportSchemaJson: () => void
 }
 
 export default function CodeViewerControls({
@@ -48,6 +50,7 @@ export default function CodeViewerControls({
   onClickEdit,
   onClickClose,
   onChangeDbOptions,
+  onExportSchemaJson,
 }: CodeViewerControlsProps): React.ReactElement {
   const { info, success, error } = useAlert()
   const { state: isDbOptionsOpen, toggle: toggleDbOptions, setOff: closeDbOptions } = useToggle()
@@ -109,6 +112,13 @@ export default function CodeViewerControls({
       />
       <IconButton
         className={classnames(iconButtonMargin, display('hidden', 'xs:inline-block'))}
+        label="export schema as JSON"
+        icon={JsonIcon}
+        iconProps={{ size: 6 }}
+        onClick={onExportSchemaJson}
+      />
+      <IconButton
+        className={classnames(iconButtonMargin, display('hidden', 'xs:inline-block'))}
         label="edit code"
         icon={PencilIcon}
         iconProps={{ size: 6 }}
@@ -144,6 +154,12 @@ export default function CodeViewerControls({
             icon: FolderIcon,
             iconProps: { size: 5 },
             onClick: handleClickDownload,
+          },
+          {
+            label: 'Export JSON',
+            icon: JsonIcon,
+            iconProps: { size: 5 },
+            onClick: onExportSchemaJson,
           },
           {
             label: 'Edit',

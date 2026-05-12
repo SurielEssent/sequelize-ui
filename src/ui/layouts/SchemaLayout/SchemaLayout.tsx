@@ -58,6 +58,7 @@ export default function SchemaLayout({
     save,
     cancel,
     back,
+    exportSchemaJson,
   } = useSchemaLayout({
     schema,
     dbOptions,
@@ -98,6 +99,7 @@ export default function SchemaLayout({
         onCancel={cancel}
         onSave={save}
         onClose={back}
+        onExportSchemaJson={exportSchemaJson}
       />
       <SchemaLayoutContent
         state={state}
