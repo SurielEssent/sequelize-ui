@@ -41,7 +41,7 @@ import { tsconfigTemplate } from './templates/tsconfig'
 import { typesTemplate } from './templates/types'
 import { getForeignKey, getOtherKey } from './utils/associations'
 import { hasJsonType } from './utils/dataTypes'
-import { getTimestampFields, idField, prefixPk } from './utils/field'
+import { idField, modelFieldsWithTimestamps, prefixPk } from './utils/field'
 import { dbTableName } from './utils/migrations'
 import { modelFileName } from './utils/model'
 
@@ -130,7 +130,7 @@ type AddTimestampFieldsArgs = {
   dbOptions: DbOptions
 }
 function addTimestampFields({ model, dbOptions }: AddTimestampFieldsArgs): Model {
-  const fields = model.fields.concat(getTimestampFields({ model, dbOptions }))
+  const fields = modelFieldsWithTimestamps(model, dbOptions).fields
   return { ...model, fields: dedupBy(fields, (f) => normalizeSingular(f.name)) }
 }
 

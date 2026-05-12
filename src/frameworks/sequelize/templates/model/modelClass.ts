@@ -8,7 +8,7 @@ import {
   noSupportedDetails,
   notSupportedComment,
 } from '../../utils/dataTypes'
-import { fieldTemplate, getTimestampFields } from '../../utils/field'
+import { fieldTemplate, modelFieldsWithTimestamps } from '../../utils/field'
 import { ModelAssociation, modelName } from '../../utils/model'
 
 export type ModelClassTempalteArgs = {
@@ -32,6 +32,10 @@ export function modelClassTemplate({
 
   const omit = associationAliases ? `, {omit: ${name}Associations}` : ''
 
+  const { fields: allFields, timestampExtras } = modelFieldsWithTimestamps(model, dbOptions)
+  const creationOptionalFor = (field: Field) =>
+    timestampExtras.includes(field) ? true : field.primaryKey
+
   return lines([
     associationAliases ? associationsType : null,
     associationAliases ? blank() : null,
@@ -40,14 +44,11 @@ export function modelClassTemplate({
       depth: 2,
     }),
     `> {`,
-    lines([...model.fields.map((field) => classFieldType(field, dbOptions, field.primaryKey))], {
-      depth: 2,
-    }),
     lines(
-      getTimestampFields({ model, dbOptions }).map((field) =>
-        classFieldType(field, dbOptions, true),
-      ),
-      { depth: 2 },
+      [...allFields.map((field) => classFieldType(field, dbOptions, creationOptionalFor(field)))],
+      {
+        depth: 2,
+      },
     ),
     associations.length ? blank() : null,
     lines(
@@ -79,9 +80,7 @@ export function modelClassTemplate({
           [
             `${name}.init({`,
             lines(
-              model.fields
-                .concat(getTimestampFields({ model, dbOptions }))
-                .map((field) => fieldTemplate({ field, dbOptions })),
+              allFields.map((field) => fieldTemplate({ field, dbOptions })),
               { depth: 2, separator: ',' },
             ),
             '}, {',

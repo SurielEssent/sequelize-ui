@@ -20,7 +20,7 @@ import {
   isIntegerType,
   Model,
 } from '@src/core/schema'
-import { camelCase, snakeCase } from '@src/utils/string'
+import { camelCase, namesEq, snakeCase } from '@src/utils/string'
 import {
   displaySequelizeDataType,
   noSupportedDetails,
@@ -241,4 +241,19 @@ export function getTimestampFields({ model, dbOptions }: GetTimestampFieldsTempl
     : null
 
   return [createdAt, updatedAt, deletedAt].filter((f): f is Field => !!f)
+}
+
+/** Model fields plus Sequelize timestamp columns, skipping any the model already defines (e.g. after JSON import). */
+export function modelFieldsWithTimestamps(
+  model: Model,
+  dbOptions: DbOptions,
+): {
+  fields: Field[]
+  timestampExtras: Field[]
+} {
+  const synthetic = getTimestampFields({ model, dbOptions })
+  const timestampExtras = synthetic.filter(
+    (s) => !model.fields.some((f) => namesEq(f.name, s.name)),
+  )
+  return { fields: model.fields.concat(timestampExtras), timestampExtras }
 }
