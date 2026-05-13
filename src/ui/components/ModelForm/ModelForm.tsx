@@ -1,4 +1,13 @@
-import { Association, emptyAssociation, emptyField, Field, Model, Schema } from '@src/core/schema'
+import { DbOptions } from '@src/core/database'
+import {
+  Association,
+  editorVisibleModelFields,
+  emptyAssociation,
+  emptyField,
+  Field,
+  Model,
+  Schema,
+} from '@src/core/schema'
 import { ModelErrors } from '@src/core/validation/schema'
 import usePrevious from '@src/ui/hooks/usePrevious'
 import {
@@ -24,6 +33,7 @@ import ModelFieldset, { modelNameId } from './ModelFieldset'
 type ModelFormProps = {
   model: Model
   schema: Schema
+  dbOptions: DbOptions
   initialState?: InitialEditModelState
   errors: ModelErrors
   onChange: (model: Model) => void
@@ -32,11 +42,13 @@ type ModelFormProps = {
 export default function ModelForm({
   model,
   schema,
+  dbOptions,
   initialState,
   errors,
   onChange,
 }: ModelFormProps): React.ReactElement {
   const prevModel = usePrevious(model)
+  const visibleFields = editorVisibleModelFields(model, dbOptions)
 
   React.useEffect(() => {
     if (!initialState) {
@@ -162,7 +174,7 @@ export default function ModelForm({
         <h3 className={classnames(title)}>Fields</h3>
 
         <ul className={classnames(panelGrid)}>
-          {model.fields.map((field) => {
+          {visibleFields.map((field) => {
             return (
               <li key={`field-form-${field.id}`} className={classnames(panel)}>
                 <FieldFieldset

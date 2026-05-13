@@ -1,4 +1,5 @@
-import { Association, Field, Model, Schema } from '@src/core/schema'
+import { DbOptions } from '@src/core/database'
+import { Association, editorVisibleModelFields, Field, Model, Schema } from '@src/core/schema'
 import {
   backgroundColor,
   classnames,
@@ -23,6 +24,7 @@ import FieldView from './FieldView'
 type ModelViewProps = {
   schema: Schema
   model: Model
+  dbOptions: DbOptions
   onViewSchema: (model?: Model) => void
   onClickAddField: () => void
   onClickEditField: (field: Field) => void
@@ -35,6 +37,7 @@ type ModelViewProps = {
 export default function ModelView({
   schema,
   model,
+  dbOptions,
   onViewSchema,
   onClickAddField,
   onClickEditField,
@@ -43,6 +46,8 @@ export default function ModelView({
   onClickEditAssociation,
   onClickDeleteAssociation,
 }: ModelViewProps): React.ReactElement {
+  const visibleFields = editorVisibleModelFields(model, dbOptions)
+
   return (
     <div
       className={classnames(
@@ -71,7 +76,7 @@ export default function ModelView({
         <h3 className={classnames(title)}>Fields</h3>
 
         <ul className={classnames(panelGrid)}>
-          {model.fields.map((field) => {
+          {visibleFields.map((field) => {
             return (
               <li key={field.id} className={classnames(panel)}>
                 <FieldView

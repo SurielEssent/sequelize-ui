@@ -1,4 +1,5 @@
 import { FileTree } from '@src/core/files/fileTree'
+import { DbOptions } from '@src/core/database'
 import { Association, Field, Model, Schema } from '@src/core/schema'
 import dynamic from 'next/dynamic'
 import React from 'react'
@@ -12,6 +13,7 @@ const ModelForm = dynamic(() => import('../../components/ModelForm'))
 
 type SchemaLayoutContentProps = {
   schema: Schema
+  dbOptions: DbOptions
   state: SchemaLayoutState
   fileTree: FileTree
   onSelectFileSystemItem: (path: string) => void
@@ -31,6 +33,7 @@ type SchemaLayoutContentProps = {
 }
 export default function SchemaLayoutContent({
   schema,
+  dbOptions,
   state,
   fileTree,
   onSelectFileSystemItem,
@@ -81,6 +84,7 @@ export default function SchemaLayoutContent({
         <ModelForm
           model={state.model}
           schema={schema}
+          dbOptions={dbOptions}
           initialState={state.initialState}
           errors={state.errors}
           onChange={updateModel}
@@ -91,6 +95,7 @@ export default function SchemaLayoutContent({
         <ModelView
           model={state.model}
           schema={schema}
+          dbOptions={dbOptions}
           onViewSchema={onViewSchema}
           onClickAddField={onClickAddField}
           onClickEditField={onClickEditField}

@@ -104,6 +104,7 @@ export default function SchemaLayout({
       <SchemaLayoutContent
         state={state}
         schema={schema}
+        dbOptions={dbOptions}
         fileTree={fileTree}
         onSelectFileSystemItem={selectItem}
         onKeyDown={handleKeyDown}
