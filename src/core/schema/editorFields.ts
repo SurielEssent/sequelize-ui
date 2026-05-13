@@ -20,6 +20,23 @@ export function isAutoManagedTimestampField(
   return false
 }
 
+/** Single-column `id` PK when project uses plain `"id"` (not table-prefixed) — Sequelize default, not edited per model. */
+export function isImplicitStandardIdField(
+  field: Field,
+  model: Model,
+  dbOptions: DbOptions,
+): boolean {
+  if (dbOptions.prefixPks) return false
+  if (!field.primaryKey) return false
+  const pkCount = model.fields.filter((f) => f.primaryKey).length
+  if (pkCount !== 1) return false
+  return namesEq(field.name, 'id')
+}
+
 export function editorVisibleModelFields(model: Model, dbOptions: DbOptions): Field[] {
-  return model.fields.filter((f) => !isAutoManagedTimestampField(f, model, dbOptions))
+  return model.fields.filter(
+    (f) =>
+      !isAutoManagedTimestampField(f, model, dbOptions) &&
+      !isImplicitStandardIdField(f, model, dbOptions),
+  )
 }

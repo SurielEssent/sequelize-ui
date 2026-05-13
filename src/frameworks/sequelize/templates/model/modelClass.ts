@@ -1,5 +1,6 @@
 import { blank, lines } from '@src/core/codegen'
 import { DbCaseStyle, DbNounForm, DbOptions } from '@src/core/database'
+import { isAutoManagedTimestampField } from '@src/core/schema/editorFields'
 import { Association, AssociationTypeType, Field, Model, integerDataType } from '@src/core/schema'
 import { camelCase, pascalCase, plural, singular, snakeCase } from '@src/utils/string'
 import { associationName } from '../../utils/associations'
@@ -34,7 +35,9 @@ export function modelClassTemplate({
 
   const { fields: allFields, timestampExtras } = modelFieldsWithTimestamps(model, dbOptions)
   const creationOptionalFor = (field: Field) =>
-    timestampExtras.includes(field) ? true : field.primaryKey
+    timestampExtras.includes(field) ||
+    isAutoManagedTimestampField(field, model, dbOptions) ||
+    field.primaryKey
 
   return lines([
     associationAliases ? associationsType : null,

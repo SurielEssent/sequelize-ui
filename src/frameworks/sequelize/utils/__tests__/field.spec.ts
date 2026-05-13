@@ -1,7 +1,7 @@
 import { defaultDbOptions } from '@src/core/database'
 import { dateTimeDataType, field, integerDataType, model } from '@src/core/schema'
 import { fromParts } from '@src/utils/dateTime'
-import { modelFieldsWithTimestamps } from '../field'
+import { fieldTemplate, modelFieldsWithTimestamps } from '../field'
 
 const t = fromParts(2020, 1, 1)
 
@@ -50,5 +50,18 @@ describe('modelFieldsWithTimestamps', () => {
     const { fields, timestampExtras } = modelFieldsWithTimestamps(m, defaultDbOptions)
     expect(timestampExtras.length).toBe(2)
     expect(fields.length).toBe(3)
+  })
+})
+
+describe('fieldTemplate', () => {
+  it('includes allowNull: false for primary keys when required is false', () => {
+    const f = field({
+      name: 'id',
+      type: integerDataType({ unsigned: true, autoincrement: true }),
+      primaryKey: true,
+      required: false,
+    })
+    const out = fieldTemplate({ field: f, dbOptions: defaultDbOptions })
+    expect(out).toMatch(/allowNull:\s*false/)
   })
 })

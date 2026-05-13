@@ -475,14 +475,14 @@ export function useSchemaLayout({
 
     import('@src/io/schemaDownload')
       .then(({ downloadSchemaJson }) => {
-        downloadSchemaJson(snapshot)
+        downloadSchemaJson(snapshot, dbOptions)
         success('Schema JSON download started.', { ttl: 4000 })
       })
       .catch((e) => {
         console.error(e)
         error('Failed to export schema JSON.')
       })
-  }, [state, schema, success, error])
+  }, [state, schema, dbOptions, success, error])
 
   return {
     state,

@@ -1,3 +1,4 @@
+import userPreferences from '@src/api/userPreferences'
 import { Schema } from '@src/core/schema'
 import { downloadSchemaJson } from '@src/io/schemaDownload'
 import IconButton from '@src/ui/components/form/IconButton'
@@ -87,11 +88,12 @@ function MySchemaButton({ schema }: MySchemaButtonProps): React.ReactElement {
   const { success, error } = useAlert()
   const modelCount = schema.models.length
 
-  const handleExportJson = (evt: React.MouseEvent) => {
+  const handleExportJson = async (evt: React.MouseEvent) => {
     evt.preventDefault()
     evt.stopPropagation()
     try {
-      downloadSchemaJson(schema)
+      const dbOptions = await userPreferences.getDefaultDbOptions()
+      downloadSchemaJson(schema, dbOptions)
       success('Schema JSON download started.', { ttl: 4000 })
     } catch (e) {
       console.error(e)

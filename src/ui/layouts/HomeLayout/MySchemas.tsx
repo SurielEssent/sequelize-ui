@@ -56,8 +56,9 @@ export default function MySchemas(): React.ReactElement {
     try {
       const text = await file.text()
       const parsed = JSON.parse(text) as unknown
-      const imported = parseSchemaExport(parsed)
-      const created = await schemaApi.createSchema(imported)
+      const { schema: importedSchema, dbOptions } = parseSchemaExport(parsed)
+      if (dbOptions) await userPreferences.updateDefaultDbOptions(dbOptions)
+      const created = await schemaApi.createSchema(importedSchema)
       success(`Imported schema "${created.name}".`, { ttl: 6000 })
       await refetch()
       goTo(schemaRoute(created.id))

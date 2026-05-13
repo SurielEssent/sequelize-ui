@@ -51,7 +51,14 @@ import {
 
 export function fromV1(schemaV1: SchemaV1): Schema {
   const models = schemaV1.models.map(fromV1Model)
-  return schema({ ...schemaV1, forkedFrom: schemaV1.forkedFrom ?? null, models })
+  return schema({
+    id: schemaV1.id,
+    name: schemaV1.name,
+    forkedFrom: schemaV1.forkedFrom ?? null,
+    createdAt: schemaV1.createdAt,
+    updatedAt: schemaV1.updatedAt,
+    models,
+  })
 }
 
 export function toV1(schema: Schema): SchemaV1 {

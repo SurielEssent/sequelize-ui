@@ -242,6 +242,14 @@ const schema = {
   createdAt: now,
   updatedAt: now,
   models,
+  dbOptions: {
+    sqlDialect: 'postgres',
+    prefixPks: false,
+    timestamps: true,
+    caseStyle: 'snake',
+    nounForm: 'plural',
+    migrations: true,
+  },
 }
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true })

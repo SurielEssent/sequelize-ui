@@ -72,7 +72,7 @@ function fieldOptions({
     defineField(name, caseStyle, define),
     primaryKeyField(primaryKey),
     autoincrementField(type),
-    allowNullField(required),
+    allowNullField(required, primaryKey),
     uniqueField(unique),
     defaultField(type, sqlDialect, migration),
   ]
@@ -86,7 +86,8 @@ function defineField(name: string, caseStyle: DbCaseStyle, define?: boolean): st
   return define ? `field: '${caseByDbCaseStyle(name, caseStyle)}'` : null
 }
 
-function allowNullField(required?: boolean): string | null {
+function allowNullField(required?: boolean, primaryKey?: boolean): string | null {
+  if (primaryKey) return 'allowNull: false'
   return required ? `allowNull: ${!required}` : null
 }
 
